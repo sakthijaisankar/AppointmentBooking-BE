@@ -1,0 +1,5 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/AppointmentBooking.API/.vs/AppointmentBooking.API.slnx/config/applicationhost.config
