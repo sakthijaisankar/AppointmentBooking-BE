@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="../AppointmentBooking.Application/AppointmentBooking.Application.csproj" />
+  <Project Path="../AppointmentBooking.Database/AppointmentBooking.Database.csproj" />
+  <Project Path="../AppointmentBooking.Repository/AppointmentBooking.Repository.csproj" />
+  <Project Path="AppointmentBooking.API/AppointmentBooking.API.csproj" />
+</Solution>
