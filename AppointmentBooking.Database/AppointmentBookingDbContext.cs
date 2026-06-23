@@ -31,6 +31,8 @@ public class AppointmentBookingDbContext : DbContext
     public DbSet<PriorityClassificationOverride> PriorityClassificationOverrides => Set<PriorityClassificationOverride>();
     public DbSet<Symptom> Symptoms => Set<Symptom>();
     public DbSet<PatientSymptom> PatientSymptoms => Set<PatientSymptom>();
+    public DbSet<QueueStatus> QueueStatuses => Set<QueueStatus>();
+    public DbSet<QueueManagement> QueueManagements => Set<QueueManagement>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -204,6 +206,25 @@ public class AppointmentBookingDbContext : DbContext
             entity.HasOne(e => e.Appointment).WithMany(a => a.PatientSymptoms).HasForeignKey(e => e.AppointmentId);
             entity.HasOne(e => e.Symptom).WithMany().HasForeignKey(e => e.SymptomId);
             entity.HasIndex(e => new { e.AppointmentId, e.SymptomId }).IsUnique();
+        });
+
+        modelBuilder.Entity<QueueStatus>(entity =>
+        {
+            entity.ToTable("QueueStatuses");
+            entity.HasKey(e => e.QueueStatusId);
+            entity.Property(e => e.StatusCode).HasMaxLength(20);
+            entity.HasIndex(e => e.StatusCode).IsUnique();
+        });
+
+        modelBuilder.Entity<QueueManagement>(entity =>
+        {
+            entity.ToTable("QueueManagement");
+            entity.HasKey(e => e.QueueId);
+            entity.Property(e => e.QueueNumber).HasMaxLength(15);
+            entity.HasOne(e => e.Appointment).WithOne(a => a.QueueManagement).HasForeignKey<QueueManagement>(e => e.AppointmentId);
+            entity.HasOne(e => e.PatientPriorityClassification).WithMany(c => c.QueueManagements).HasForeignKey(e => e.PatientPriorityClassificationId);
+            entity.HasOne(e => e.QueueStatus).WithMany(s => s.Queues).HasForeignKey(e => e.QueueStatusId);
+            entity.HasIndex(e => e.AppointmentId).IsUnique();
         });
     }
 }

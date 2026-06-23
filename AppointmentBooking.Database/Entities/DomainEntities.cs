@@ -215,6 +215,7 @@ public class Appointment
     public AppointmentStatus AppointmentStatus { get; set; } = null!;
     public User? CreatedByUser { get; set; }
     public PatientPriorityClassification? CurrentPriorityClassification { get; set; }
+    public QueueManagement? QueueManagement { get; set; }
     public ICollection<PatientSymptom> PatientSymptoms { get; set; } = new List<PatientSymptom>();
 }
 
@@ -294,6 +295,7 @@ public class PatientPriorityClassification
     public PriorityLevel PredictedPriorityLevel { get; set; } = null!;
     public User? ClassifiedByUser { get; set; }
     public ICollection<PriorityClassificationOverride> Overrides { get; set; } = new List<PriorityClassificationOverride>();
+    public ICollection<QueueManagement> QueueManagements { get; set; } = new List<QueueManagement>();
 }
 
 public class PriorityClassificationOverride
@@ -333,4 +335,36 @@ public class PatientSymptom
 
     public Appointment Appointment { get; set; } = null!;
     public Symptom Symptom { get; set; } = null!;
+}
+
+public class QueueStatus
+{
+    public int QueueStatusId { get; set; }
+    public string StatusCode { get; set; } = string.Empty;
+    public string StatusName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+
+    public ICollection<QueueManagement> Queues { get; set; } = new List<QueueManagement>();
+}
+
+public class QueueManagement
+{
+    public int QueueId { get; set; }
+    public int AppointmentId { get; set; }
+    public int PatientPriorityClassificationId { get; set; }
+    public string QueueNumber { get; set; } = string.Empty;
+    public int QueueStatusId { get; set; }
+    public int EstimatedWaitTimeMinutes { get; set; }
+    public DateTime CheckInTime { get; set; }
+    public DateTime? CallingTime { get; set; }
+    public DateTime? ConsultationStartTime { get; set; }
+    public DateTime? ConsultationEndTime { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+
+    public Appointment Appointment { get; set; } = null!;
+    public PatientPriorityClassification PatientPriorityClassification { get; set; } = null!;
+    public QueueStatus QueueStatus { get; set; } = null!;
 }
