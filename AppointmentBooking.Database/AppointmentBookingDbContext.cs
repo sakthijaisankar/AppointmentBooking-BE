@@ -20,6 +20,8 @@ public class AppointmentBookingDbContext : DbContext
     public DbSet<PatientDocument> PatientDocuments => Set<PatientDocument>();
     public DbSet<Clinic> Clinics => Set<Clinic>();
     public DbSet<Doctor> Doctors => Set<Doctor>();
+    public DbSet<Specialization> Specializations => Set<Specialization>();
+    public DbSet<DoctorSchedule> DoctorSchedules => Set<DoctorSchedule>();
     public DbSet<AppointmentStatus> AppointmentStatuses => Set<AppointmentStatus>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<PriorityLevel> PriorityLevels => Set<PriorityLevel>();
@@ -27,6 +29,8 @@ public class AppointmentBookingDbContext : DbContext
     public DbSet<PatientClinicalFeature> PatientClinicalFeatures => Set<PatientClinicalFeature>();
     public DbSet<PatientPriorityClassification> PatientPriorityClassifications => Set<PatientPriorityClassification>();
     public DbSet<PriorityClassificationOverride> PriorityClassificationOverrides => Set<PriorityClassificationOverride>();
+    public DbSet<Symptom> Symptoms => Set<Symptom>();
+    public DbSet<PatientSymptom> PatientSymptoms => Set<PatientSymptom>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -99,12 +103,28 @@ public class AppointmentBookingDbContext : DbContext
             entity.HasKey(e => e.ClinicId);
         });
 
+        modelBuilder.Entity<Specialization>(entity =>
+        {
+            entity.ToTable("Specializations");
+            entity.HasKey(e => e.SpecializationId);
+            entity.Property(e => e.SpecializationName).HasMaxLength(100);
+            entity.HasIndex(e => e.SpecializationName).IsUnique();
+        });
+
         modelBuilder.Entity<Doctor>(entity =>
         {
             entity.ToTable("Doctors");
             entity.HasKey(e => e.DoctorId);
             entity.HasOne(e => e.Clinic).WithMany(c => c.Doctors).HasForeignKey(e => e.ClinicId);
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId);
+            entity.HasOne(e => e.Specialization).WithMany(s => s.Doctors).HasForeignKey(e => e.SpecializationId);
+        });
+
+        modelBuilder.Entity<DoctorSchedule>(entity =>
+        {
+            entity.ToTable("DoctorSchedules");
+            entity.HasKey(e => e.DoctorScheduleId);
+            entity.HasOne(e => e.Doctor).WithMany(d => d.Schedules).HasForeignKey(e => e.DoctorId);
         });
 
         modelBuilder.Entity<AppointmentStatus>(entity =>
@@ -167,6 +187,23 @@ public class AppointmentBookingDbContext : DbContext
             entity.HasOne(e => e.OriginalPriorityLevel).WithMany().HasForeignKey(e => e.OriginalPriorityLevelId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(e => e.OverridePriorityLevel).WithMany().HasForeignKey(e => e.OverridePriorityLevelId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(e => e.OverriddenByUser).WithMany().HasForeignKey(e => e.OverriddenByUserId);
+        });
+
+        modelBuilder.Entity<Symptom>(entity =>
+        {
+            entity.ToTable("Symptoms");
+            entity.HasKey(e => e.SymptomId);
+            entity.Property(e => e.SymptomName).HasMaxLength(100);
+            entity.HasIndex(e => e.SymptomName).IsUnique();
+        });
+
+        modelBuilder.Entity<PatientSymptom>(entity =>
+        {
+            entity.ToTable("PatientSymptoms");
+            entity.HasKey(e => e.PatientSymptomId);
+            entity.HasOne(e => e.Appointment).WithMany(a => a.PatientSymptoms).HasForeignKey(e => e.AppointmentId);
+            entity.HasOne(e => e.Symptom).WithMany().HasForeignKey(e => e.SymptomId);
+            entity.HasIndex(e => new { e.AppointmentId, e.SymptomId }).IsUnique();
         });
     }
 }

@@ -139,6 +139,17 @@ public class Clinic
     public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 }
 
+public class Specialization
+{
+    public int SpecializationId { get; set; }
+    public string SpecializationName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+
+    public ICollection<Doctor> Doctors { get; set; } = new List<Doctor>();
+}
+
 public class Doctor
 {
     public int DoctorId { get; set; }
@@ -146,14 +157,31 @@ public class Doctor
     public int? UserId { get; set; }
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
-    public string Specialization { get; set; } = string.Empty;
+    public int SpecializationId { get; set; }
     public string LicenseNumber { get; set; } = string.Empty;
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
 
     public Clinic Clinic { get; set; } = null!;
     public User? User { get; set; }
+    public Specialization Specialization { get; set; } = null!;
     public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
+    public ICollection<DoctorSchedule> Schedules { get; set; } = new List<DoctorSchedule>();
+}
+
+public class DoctorSchedule
+{
+    public int DoctorScheduleId { get; set; }
+    public int DoctorId { get; set; }
+    public int DayOfWeek { get; set; }
+    public TimeSpan StartTime { get; set; }
+    public TimeSpan EndTime { get; set; }
+    public int SlotDurationMinutes { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+
+    public Doctor Doctor { get; set; } = null!;
 }
 
 public class AppointmentStatus
@@ -187,6 +215,7 @@ public class Appointment
     public AppointmentStatus AppointmentStatus { get; set; } = null!;
     public User? CreatedByUser { get; set; }
     public PatientPriorityClassification? CurrentPriorityClassification { get; set; }
+    public ICollection<PatientSymptom> PatientSymptoms { get; set; } = new List<PatientSymptom>();
 }
 
 public class PriorityLevel
@@ -281,4 +310,27 @@ public class PriorityClassificationOverride
     public PriorityLevel OriginalPriorityLevel { get; set; } = null!;
     public PriorityLevel OverridePriorityLevel { get; set; } = null!;
     public User OverriddenByUser { get; set; } = null!;
+}
+
+public class Symptom
+{
+    public int SymptomId { get; set; }
+    public string SymptomName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public class PatientSymptom
+{
+    public int PatientSymptomId { get; set; }
+    public int AppointmentId { get; set; }
+    public int SymptomId { get; set; }
+    public int SeverityLevel { get; set; }
+    public string? ExistingConditions { get; set; }
+    public string? Notes { get; set; }
+    public DateTime CreatedAt { get; set; }
+
+    public Appointment Appointment { get; set; } = null!;
+    public Symptom Symptom { get; set; } = null!;
 }
