@@ -16,15 +16,24 @@ public class QueueService : IQueueService
     private readonly IQueueRepository _queueRepository;
     private readonly IAppointmentRepository _appointmentRepository;
     private readonly IPatientPriorityRepository _patientPriorityRepository;
+    private readonly IPatientRepository _patientRepository;
+    private readonly IDoctorRepository _doctorRepository;
+    private readonly INotificationService _notificationService;
 
     public QueueService(
         IQueueRepository queueRepository,
         IAppointmentRepository appointmentRepository,
-        IPatientPriorityRepository patientPriorityRepository)
+        IPatientPriorityRepository patientPriorityRepository,
+        IPatientRepository patientRepository,
+        IDoctorRepository doctorRepository,
+        INotificationService notificationService)
     {
         _queueRepository = queueRepository;
         _appointmentRepository = appointmentRepository;
         _patientPriorityRepository = patientPriorityRepository;
+        _patientRepository = patientRepository;
+        _doctorRepository = doctorRepository;
+        _notificationService = notificationService;
     }
 
     public async Task<QueueEntryDto> CheckInPatientAsync(CheckInRequestDto request, CancellationToken cancellationToken = default)
@@ -110,6 +119,34 @@ public class QueueService : IQueueService
         {
             case "CALLING":
                 entry.CallingTime = DateTime.UtcNow;
+                try
+                {
+                    var appointment = await _appointmentRepository.GetByIdAsync(entry.AppointmentId, cancellationToken);
+                    if (appointment != null)
+                    {
+                        var pat = await _patientRepository.GetByIdAsync(appointment.PatientId, cancellationToken);
+                        var doc = await _doctorRepository.GetByIdAsync(appointment.DoctorId, cancellationToken);
+                        if (pat != null && doc != null)
+                        {
+                            await _notificationService.SendNotificationAsync(
+                                "QUEUE_CALLING",
+                                pat.UserId,
+                                appointment.AppointmentId,
+                                new Dictionary<string, string>
+                                {
+                                    { "PatientName", $"{pat.FirstName} {pat.LastName}" },
+                                    { "DoctorName", $"{doc.FirstName} {doc.LastName}" },
+                                    { "QueueNumber", entry.QueueNumber }
+                                },
+                                cancellationToken
+                            );
+                        }
+                    }
+                }
+                catch
+                {
+                    // Fail-safe
+                }
                 break;
 
             case "IN_CONSULTATION":

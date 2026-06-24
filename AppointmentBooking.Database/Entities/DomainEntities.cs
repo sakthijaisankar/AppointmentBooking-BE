@@ -144,9 +144,11 @@ public class Specialization
     public int SpecializationId { get; set; }
     public string SpecializationName { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public int DepartmentId { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
 
+    public Department Department { get; set; } = null!;
     public ICollection<Doctor> Doctors { get; set; } = new List<Doctor>();
 }
 
@@ -216,6 +218,7 @@ public class Appointment
     public User? CreatedByUser { get; set; }
     public PatientPriorityClassification? CurrentPriorityClassification { get; set; }
     public QueueManagement? QueueManagement { get; set; }
+    public Consultation? Consultation { get; set; }
     public ICollection<PatientSymptom> PatientSymptoms { get; set; } = new List<PatientSymptom>();
 }
 
@@ -367,4 +370,104 @@ public class QueueManagement
     public Appointment Appointment { get; set; } = null!;
     public PatientPriorityClassification PatientPriorityClassification { get; set; } = null!;
     public QueueStatus QueueStatus { get; set; } = null!;
+}
+
+public class Consultation
+{
+    public int ConsultationId { get; set; }
+    public int AppointmentId { get; set; }
+    public int DoctorId { get; set; }
+    public int PatientId { get; set; }
+    public string Diagnosis { get; set; } = string.Empty;
+    public string? ClinicalNotes { get; set; }
+    public bool FollowUpRequired { get; set; }
+    public DateOnly? FollowUpDate { get; set; }
+    public int? ConsultedByUserId { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+
+    public Appointment Appointment { get; set; } = null!;
+    public Doctor Doctor { get; set; } = null!;
+    public Patient Patient { get; set; } = null!;
+    public User? ConsultedByUser { get; set; }
+    public ICollection<Prescription> Prescriptions { get; set; } = new List<Prescription>();
+}
+
+public class Prescription
+{
+    public int PrescriptionId { get; set; }
+    public int ConsultationId { get; set; }
+    public string MedicineName { get; set; } = string.Empty;
+    public string Dosage { get; set; } = string.Empty;
+    public string Frequency { get; set; } = string.Empty;
+    public int DurationDays { get; set; }
+    public string? Instructions { get; set; }
+    public DateTime CreatedAt { get; set; }
+
+    public Consultation Consultation { get; set; } = null!;
+}
+
+public class NotificationTemplate
+{
+    public int TemplateId { get; set; }
+    public string TemplateCode { get; set; } = string.Empty;
+    public string TemplateName { get; set; } = string.Empty;
+    public string? SubjectTemplate { get; set; }
+    public string BodyTemplate { get; set; } = string.Empty;
+    public string DefaultChannel { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+}
+
+public class Notification
+{
+    public int NotificationId { get; set; }
+    public int UserId { get; set; }
+    public int? AppointmentId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Body { get; set; } = string.Empty;
+    public string Channel { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty; // Pending, Sent, Failed
+    public string? ErrorMessage { get; set; }
+    public bool IsRead { get; set; }
+    public DateTime? SentAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+
+    public User User { get; set; } = null!;
+    public Appointment? Appointment { get; set; }
+}
+
+public class Department
+{
+    public int DepartmentId { get; set; }
+    public string DepartmentName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+
+    public ICollection<Specialization> Specializations { get; set; } = new List<Specialization>();
+}
+
+public class SystemSetting
+{
+    public int SettingId { get; set; }
+    public string SettingKey { get; set; } = string.Empty;
+    public string SettingValue { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
+
+public class AuditLog
+{
+    public int AuditLogId { get; set; }
+    public int? UserId { get; set; }
+    public string Action { get; set; } = string.Empty;
+    public string EntityName { get; set; } = string.Empty;
+    public int? EntityId { get; set; }
+    public string? Details { get; set; }
+    public string? IpAddress { get; set; }
+    public DateTime Timestamp { get; set; }
+
+    public User? User { get; set; }
 }

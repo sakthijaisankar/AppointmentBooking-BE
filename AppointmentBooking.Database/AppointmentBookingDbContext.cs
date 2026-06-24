@@ -33,6 +33,13 @@ public class AppointmentBookingDbContext : DbContext
     public DbSet<PatientSymptom> PatientSymptoms => Set<PatientSymptom>();
     public DbSet<QueueStatus> QueueStatuses => Set<QueueStatus>();
     public DbSet<QueueManagement> QueueManagements => Set<QueueManagement>();
+    public DbSet<Consultation> Consultations => Set<Consultation>();
+    public DbSet<Prescription> Prescriptions => Set<Prescription>();
+    public DbSet<NotificationTemplate> NotificationTemplates => Set<NotificationTemplate>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<Department> Departments => Set<Department>();
+    public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -111,6 +118,7 @@ public class AppointmentBookingDbContext : DbContext
             entity.HasKey(e => e.SpecializationId);
             entity.Property(e => e.SpecializationName).HasMaxLength(100);
             entity.HasIndex(e => e.SpecializationName).IsUnique();
+            entity.HasOne(e => e.Department).WithMany(d => d.Specializations).HasForeignKey(e => e.DepartmentId);
         });
 
         modelBuilder.Entity<Doctor>(entity =>
@@ -225,6 +233,75 @@ public class AppointmentBookingDbContext : DbContext
             entity.HasOne(e => e.PatientPriorityClassification).WithMany(c => c.QueueManagements).HasForeignKey(e => e.PatientPriorityClassificationId);
             entity.HasOne(e => e.QueueStatus).WithMany(s => s.Queues).HasForeignKey(e => e.QueueStatusId);
             entity.HasIndex(e => e.AppointmentId).IsUnique();
+        });
+
+        modelBuilder.Entity<Consultation>(entity =>
+        {
+            entity.ToTable("Consultations");
+            entity.HasKey(e => e.ConsultationId);
+            entity.Property(e => e.Diagnosis).HasMaxLength(2000);
+            entity.Property(e => e.ClinicalNotes).HasMaxLength(4000);
+            entity.HasOne(e => e.Appointment).WithOne(a => a.Consultation).HasForeignKey<Consultation>(e => e.AppointmentId);
+            entity.HasOne(e => e.Doctor).WithMany().HasForeignKey(e => e.DoctorId);
+            entity.HasOne(e => e.Patient).WithMany().HasForeignKey(e => e.PatientId);
+            entity.HasOne(e => e.ConsultedByUser).WithMany().HasForeignKey(e => e.ConsultedByUserId);
+            entity.HasIndex(e => e.AppointmentId).IsUnique();
+        });
+
+        modelBuilder.Entity<Prescription>(entity =>
+        {
+            entity.ToTable("Prescriptions");
+            entity.HasKey(e => e.PrescriptionId);
+            entity.Property(e => e.MedicineName).HasMaxLength(200);
+            entity.Property(e => e.Dosage).HasMaxLength(100);
+            entity.Property(e => e.Frequency).HasMaxLength(100);
+            entity.Property(e => e.Instructions).HasMaxLength(500);
+            entity.HasOne(e => e.Consultation).WithMany(c => c.Prescriptions).HasForeignKey(e => e.ConsultationId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<NotificationTemplate>(entity =>
+        {
+            entity.ToTable("NotificationTemplates");
+            entity.HasKey(e => e.TemplateId);
+            entity.Property(e => e.TemplateCode).HasMaxLength(50);
+            entity.HasIndex(e => e.TemplateCode).IsUnique();
+        });
+
+        modelBuilder.Entity<Notification>(entity =>
+        {
+            entity.ToTable("Notifications");
+            entity.HasKey(e => e.NotificationId);
+            entity.Property(e => e.Title).HasMaxLength(200);
+            entity.Property(e => e.Channel).HasMaxLength(20);
+            entity.Property(e => e.Status).HasMaxLength(20);
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Appointment).WithMany().HasForeignKey(e => e.AppointmentId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<Department>(entity =>
+        {
+            entity.ToTable("Departments");
+            entity.HasKey(e => e.DepartmentId);
+            entity.Property(e => e.DepartmentName).HasMaxLength(100);
+            entity.HasIndex(e => e.DepartmentName).IsUnique();
+        });
+
+        modelBuilder.Entity<SystemSetting>(entity =>
+        {
+            entity.ToTable("SystemSettings");
+            entity.HasKey(e => e.SettingId);
+            entity.Property(e => e.SettingKey).HasMaxLength(100);
+            entity.HasIndex(e => e.SettingKey).IsUnique();
+        });
+
+        modelBuilder.Entity<AuditLog>(entity =>
+        {
+            entity.ToTable("AuditLogs");
+            entity.HasKey(e => e.AuditLogId);
+            entity.Property(e => e.Action).HasMaxLength(100);
+            entity.Property(e => e.EntityName).HasMaxLength(100);
+            entity.Property(e => e.IpAddress).HasMaxLength(50);
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

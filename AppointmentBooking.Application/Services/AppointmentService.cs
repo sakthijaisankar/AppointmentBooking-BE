@@ -21,6 +21,7 @@ public class AppointmentService : IAppointmentService
     private readonly IDoctorRepository _doctorRepository;
     private readonly IPatientRepository _patientRepository;
     private readonly IUserRepository _userRepository;
+    private readonly INotificationService _notificationService;
     private readonly IValidator<CreateAppointmentRequestDto> _createAppointmentValidator;
     private readonly IValidator<UpdateAppointmentStatusRequestDto> _updateStatusValidator;
 
@@ -29,6 +30,7 @@ public class AppointmentService : IAppointmentService
         IDoctorRepository doctorRepository,
         IPatientRepository patientRepository,
         IUserRepository userRepository,
+        INotificationService notificationService,
         IValidator<CreateAppointmentRequestDto> createAppointmentValidator,
         IValidator<UpdateAppointmentStatusRequestDto> updateStatusValidator)
     {
@@ -36,6 +38,7 @@ public class AppointmentService : IAppointmentService
         _doctorRepository = doctorRepository;
         _patientRepository = patientRepository;
         _userRepository = userRepository;
+        _notificationService = notificationService;
         _createAppointmentValidator = createAppointmentValidator;
         _updateStatusValidator = updateStatusValidator;
     }
@@ -137,6 +140,28 @@ public class AppointmentService : IAppointmentService
 
         // Fetch details (with eagerly loaded entities) to return DTO
         var detail = await _appointmentRepository.GetDetailByIdAsync(created.AppointmentId, cancellationToken);
+
+        try
+        {
+            await _notificationService.SendNotificationAsync(
+                "APPOINTMENT_BOOKED",
+                patient.UserId,
+                created.AppointmentId,
+                new Dictionary<string, string>
+                {
+                    { "PatientName", $"{patient.FirstName} {patient.LastName}" },
+                    { "DoctorName", $"{doctor.FirstName} {doctor.LastName}" },
+                    { "AppointmentNumber", created.AppointmentNumber },
+                    { "ScheduledTime", created.ScheduledDateTime.ToString("g") }
+                },
+                cancellationToken
+            );
+        }
+        catch
+        {
+            // Fail-safe: do not crash the booking if notifications fail
+        }
+
         return MapToDetailDto(detail ?? created);
     }
 
@@ -210,6 +235,38 @@ public class AppointmentService : IAppointmentService
         await _appointmentRepository.SaveChangesAsync(cancellationToken);
 
         var detail = await _appointmentRepository.GetDetailByIdAsync(appointment.AppointmentId, cancellationToken);
+
+        if (statusName == "Confirmed" || statusName == "Cancelled")
+        {
+            try
+            {
+                var pat = await _patientRepository.GetByIdAsync(appointment.PatientId, cancellationToken);
+                var doc = await _doctorRepository.GetByIdAsync(appointment.DoctorId, cancellationToken);
+                if (pat != null && doc != null)
+                {
+                    var templateCode = statusName == "Confirmed" ? "APPOINTMENT_CONFIRMED" : "APPOINTMENT_CANCELLED";
+                    await _notificationService.SendNotificationAsync(
+                        templateCode,
+                        pat.UserId,
+                        appointment.AppointmentId,
+                        new Dictionary<string, string>
+                        {
+                            { "PatientName", $"{pat.FirstName} {pat.LastName}" },
+                            { "DoctorName", $"{doc.FirstName} {doc.LastName}" },
+                            { "AppointmentNumber", appointment.AppointmentNumber },
+                            { "ScheduledTime", appointment.ScheduledDateTime.ToString("g") },
+                            { "Reason", notes ?? "No reason provided" }
+                        },
+                        cancellationToken
+                    );
+                }
+            }
+            catch
+            {
+                // Fail-safe
+            }
+        }
+
         return MapToDetailDto(detail ?? appointment);
     }
 

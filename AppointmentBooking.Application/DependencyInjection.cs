@@ -27,6 +27,9 @@ public static class DependencyInjection
         services.AddScoped<IAppointmentService, AppointmentService>();
         services.AddScoped<ISymptomService, SymptomService>();
         services.AddScoped<IQueueService, QueueService>();
+        services.AddScoped<IConsultationService, ConsultationService>();
+        services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IReportService, ReportService>();
         services.AddSingleton<IPatientPriorityPredictionEngine, PatientPriorityPredictionEngine>();
 
         services.AddScoped<IValidator<ClassifyPatientPriorityRequestDto>, ClassifyPatientPriorityRequestValidator>();
